@@ -1,0 +1,4 @@
+[submodule "allennlp"]
+	path = allennlp
+	url = https://github.com/ethch18/allennlp.git
+	branch = lr-ssmba-multitask

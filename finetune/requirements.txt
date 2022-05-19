@@ -1,0 +1,5 @@
+transformers==4.3.3
+torch==1.7.1
+./allennlp  # https://github.com/ethch18/allennlp/tree/lr-ssmba-multitask
+jsonnetbin  # required for Windows, optional otherwise
+conllu==1.3.1
