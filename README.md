@@ -11,26 +11,26 @@ The models were trained on Korpus Malti v4.0, which can be accessed through the 
 ## Evaluation
 
 These models were evaluated on Dependency Parsing, Part-of-Speech Tagging, Named-Entity Recognition, & Sentiment Analysis.
-They can be used to make predictions as follows (using [`finetune` directory](finetune) as the working path):
+To make predictions, use [`finetune` directory](finetune) as the working path (installing the latest [AllenNLP](https://github.com/allenai/allennlp) instead of the one specified), & execute the following command:
 
 ```shell
-allennlp predict $MODEL_PATH $DATA_PATH \
+allennlp predict hf://MLRS/$name $DATA_PATH \
   --predictor $predictor \
   --multitask-head $head \
   --use-dataset-reader \
   --output-file $PREDICTIONS_PATH \
   --include-package modules
 ```
-where `$predictor` & `$head` is specific to the task:
 
-|                          | `$predictor`              | `$head`      |
-|--------------------------|---------------------------|--------------|
-| Dependency Parsing*      | `depdendency_parser`      | `ud`         |
-| Part-of-Speech Tagging   | `part_of_speech_tagger`   | `pos`        |
-| Named-Entity Recognition | `named_entity_recogniser` | `ner`        |
-| Sentiment Analysis       | `sentiment_classifier`    | `sentiment`  |
+where `$name`, `$predictor`, & `$head` are specific to the task.
+For BERTu these are as follows:
 
-_*Additionally also add the following arguments as well: `--extend-namespace head_tags --extend-namespace head_indices`._
+|                          | `$name`                                                                                                   | `$predictor`              | `$head`      |
+|--------------------------|-----------------------------------------------------------------------------------------------------------|-------------------------|--------------|
+| Dependency Parsing       | [BERTu-ud](https://huggingface.co/MLRS/BERTu-ud)                                                          |`depdendency_parser`      | `ud`         |
+| Part-of-Speech Tagging   | [BERTu-xpos](https://huggingface.co/MLRS/BERTu-xpos)/[BERTu-upos](https://huggingface.co/MLRS/BERTu-upos) |`part_of_speech_tagger`   | `pos`        |
+| Named-Entity Recognition | [BERTu-ner](https://huggingface.co/MLRS/BERTu-ner)                                                        |`named_entity_recogniser` | `ner`        |
+| Sentiment Analysis       | [BERTu-sentiment](https://huggingface.co/MLRS/BERTu-sentiment)                                            |`sentiment_classifier`    | `sentiment`  |
 
 For details on how fine-tuning was done see the [`finetune` directory](finetune).
 
