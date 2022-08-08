@@ -77,9 +77,6 @@ local max_length = 512;
     },
     "data_loader": {
         "type": "multitask",
-        [if template.dataset == "mapa_ner" then "max_instances_in_memory" else null]: {
-            "ner": device_batch_size,
-        },
         "shuffle": true,
         "scheduler": {
             "type": "unbalanced_homogeneous_roundrobin",
@@ -91,9 +88,6 @@ local max_length = 512;
     },
     "validation_data_loader": {
         "type": "multitask",
-        [if template.dataset == "mapa_ner" then "max_instances_in_memory" else null]: {
-            "ner": device_batch_size,
-        },
         "shuffle": true,
         "scheduler": {
             "type": "homogeneous_roundrobin",
