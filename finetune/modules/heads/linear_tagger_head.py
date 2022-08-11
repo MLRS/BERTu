@@ -23,22 +23,25 @@ class LinearTagger(Head):
         self,
         vocab: Vocabulary,
         encoder: Seq2SeqEncoder,
+        label_namespace: str = "pos",
         dropout: float = 0.0,
         initializer: InitializerApplicator = InitializerApplicator(),
         **kwargs,
     ) -> None:
         super().__init__(vocab, **kwargs)
 
+        self.namespace = label_namespace
+
         self.encoder = encoder
         self.dropout = nn.Dropout(dropout)
         self.linear = nn.Linear(
-            encoder.get_output_dim(), vocab.get_vocab_size("pos")
+            encoder.get_output_dim(), vocab.get_vocab_size(label_namespace)
         )
 
         self.accuracy = CategoricalAccuracy()
         self.accuracy_words_only = CategoricalAccuracy()
         self.non_word_tags = set(
-            vocab.get_token_index(tag, "pos") for tag in {"PUNCT", "SYM", "X"}
+            vocab.get_token_index(tag, label_namespace) for tag in {"PUNCT", "SYM", "X"}
         )
 
         initializer(self)
@@ -48,7 +51,7 @@ class LinearTagger(Head):
         self,
         embedded_text_input: torch.Tensor,
         mask: torch.Tensor,
-        pos_tags: torch.LongTensor = None,
+        tags: torch.LongTensor = None,
         metadata: List[Dict[str, Any]] = None,
         **kwargs,
     ) -> Dict[str, torch.Tensor]:
@@ -60,14 +63,14 @@ class LinearTagger(Head):
 
         outputs = {"logits": logits, "mask": mask}
 
-        if pos_tags is not None:
-            loss = sequence_cross_entropy_with_logits(logits, pos_tags, mask)
-            self.accuracy(logits, pos_tags, mask)
+        if tags is not None:
+            loss = sequence_cross_entropy_with_logits(logits, tags, mask)
+            self.accuracy(logits, tags, mask)
             word_mask = mask.clone()
             for label in self.non_word_tags:
-                label_mask = pos_tags.eq(label)
+                label_mask = tags.eq(label)
                 word_mask = word_mask & ~label_mask
-            self.accuracy_words_only(logits, pos_tags, word_mask)
+            self.accuracy_words_only(logits, tags, word_mask)
 
             outputs["loss"] = loss
         if metadata is not None:
@@ -85,7 +88,7 @@ class LinearTagger(Head):
         """
 
         def decode_tag(tag):
-            return self.vocab.get_token_from_index(tag, namespace="pos")
+            return self.vocab.get_token_from_index(tag, namespace=self.namespace)
 
         logits = output_dict["logits"].max(-1)[1]
         mask = output_dict["mask"]

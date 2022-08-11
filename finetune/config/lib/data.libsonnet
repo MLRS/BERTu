@@ -9,6 +9,10 @@ local base_path = std.extVar("DATA_PATH");
         "path": base_path + "/MLRS POS Gold/mlrs_pos-%s.tsv",
         "size": 4935,
     },
+    "mapa_ner": {
+        "path": base_path + "/MAPA NER/mapa_ner-%s.tsv",
+        "size": 267896,
+    },
     "wikiann": {
         "path": base_path + "/WikiAnn/mt/%s",
         "size": 100,

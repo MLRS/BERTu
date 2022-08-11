@@ -94,6 +94,44 @@ local data_root = std.extVar("MTL_DATA");
         "batch_size": 64,
         "validation_metric": ["+ner_f1-measure-overall"],
     },
+    build_multilevel_ner(language_model_name, dataset="mapa_ner")::
+    template{
+        "key": ["ner", "ner_level2"],
+        "model_name": language_model_name,
+        "dataset": dataset,
+        "dataset_reader"+: {
+            "readers"+: {
+                "ner"+: {
+                    "tag_level": 1,
+                },
+                "ner_level2"+: {
+                    "tag_level": 2,
+                },
+            },
+        },
+        "head": {
+            "type": "linear_tagger",
+            "encoder": {
+                "type": "pass_through",
+                "input_dim": 768,
+            },
+            "dropout": 0.3,
+            "initializer": {
+                "regexes": [
+                    [".*projection.*weight", {"type": "xavier_uniform"}],
+                    [".*projection.*bias", {"type": "zero"}],
+                    [".*tag_bilinear.*weight", {"type": "xavier_uniform"}],
+                    [".*tag_bilinear.*bias", {"type": "zero"}],
+                    [".*weight_ih.*", {"type": "xavier_uniform"}],
+                    [".*weight_hh.*", {"type": "orthogonal"}],
+                    [".*bias_ih.*", {"type": "zero"}],
+                    [".*bias_hh.*", {"type": "lstm_hidden_bias"}]
+                ]
+            },
+        },
+        "batch_size": 64,
+        "validation_metric": "+ner_level2_accuracy",
+    },
     build_sa(language_model_name)::
     template{
         "key": "sentiment",

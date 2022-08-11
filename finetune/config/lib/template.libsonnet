@@ -20,6 +20,7 @@ local max_length = 512;
     batch_size:: error required("batch_size"),
     validation_metric:: ["+.sum"],
 
+    local keys = if std.isArray(template.key) then template.key else [template.key],
     local model_path = models[template.model_name],
     local device_batch_size = template.batch_size / std.length(cuda_devices),
     local data_size = data[template.dataset]["size"],
@@ -30,8 +31,9 @@ local max_length = 512;
     "dataset_reader": {
         "type": "multitask",
         "readers": {
-            [template.key]: {
+            [key]: {
                 "type": template.dataset,
+                "label_namespace": key,
                 "token_indexers": {
                     "transformer": {
                         "type": "pretrained_transformer_mismatched",
@@ -40,13 +42,16 @@ local max_length = 512;
                     },
                 },
             },
+            for key in keys
         },
     },
     "train_data_path": {
-        [template.key]: data[template.dataset]["path"] % "train"
+        [key]: data[template.dataset]["path"] % "train",
+        for key in keys
     },
     "validation_data_path": {
-        [template.key]: data[template.dataset]["path"] % "dev",
+        [key]: data[template.dataset]["path"] % "dev",
+        for key in keys
     },
     "model": {
         "type": "multitask",
@@ -72,7 +77,8 @@ local max_length = 512;
             },
         },
         "heads": {
-            [template.key]: template.head,
+            [key]: template.head + {"label_namespace": key},
+            for key in keys
         },
     },
     "data_loader": {
@@ -82,7 +88,8 @@ local max_length = 512;
             "type": "unbalanced_homogeneous_roundrobin",
             "batch_size": device_batch_size,
             "dataset_sizes": {
-                [template.key]: device_batch_size,
+                [key]: device_batch_size,
+                for key in keys
             },
         },
     },
