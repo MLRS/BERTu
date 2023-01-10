@@ -7,32 +7,8 @@ For details on how pre-training was done see the [`pretrain` directory](pretrain
 
 The models were trained on Korpus Malti v4.0, which can be accessed through the Hugging Face Hub using [`MLRS/korpus_malti`](https://huggingface.co/datasets/MLRS/korpus_malti).
 
-
-## Evaluation
-
-These models were evaluated on Dependency Parsing, Part-of-Speech Tagging, Named-Entity Recognition, & Sentiment Analysis.
-To make predictions, use [`finetune` directory](finetune) as the working path (installing the latest [AllenNLP](https://github.com/allenai/allennlp) instead of the one specified), & execute the following command:
-
-```shell
-allennlp predict hf://MLRS/$name $DATA_PATH \
-  --predictor $predictor \
-  --multitask-head $head \
-  --use-dataset-reader \
-  --output-file $PREDICTIONS_PATH \
-  --include-package modules
-```
-
-where `$name`, `$predictor`, & `$head` are specific to the task.
-For BERTu these are as follows:
-
-|                          | `$name`                                                                                                   | `$predictor`              | `$head`      |
-|--------------------------|-----------------------------------------------------------------------------------------------------------|-------------------------|--------------|
-| Dependency Parsing       | [BERTu-ud](https://huggingface.co/MLRS/BERTu-ud)                                                          |`depdendency_parser`      | `ud`         |
-| Part-of-Speech Tagging   | [BERTu-xpos](https://huggingface.co/MLRS/BERTu-xpos)/[BERTu-upos](https://huggingface.co/MLRS/BERTu-upos) |`part_of_speech_tagger`   | `pos`        |
-| Named-Entity Recognition | [BERTu-ner](https://huggingface.co/MLRS/BERTu-ner)                                                        |`named_entity_recogniser` | `ner`        |
-| Sentiment Analysis       | [BERTu-sentiment](https://huggingface.co/MLRS/BERTu-sentiment)                                            |`sentiment_classifier`    | `sentiment`  |
-
-For details on how fine-tuning was done see the [`finetune` directory](finetune).
+- For details on how fine-tuning was done see the [`finetune` directory](finetune).
+- To consume fine-tuned models for evaluation/prediction refer to the [`evaluate` directory](evaluate).
 
 ## Citation
 
