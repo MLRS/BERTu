@@ -1,5 +1,7 @@
 # BERTu: A BERT-based language model for the Maltese language :malta:
 
+<img src="logo.png" width="200" margin-right="1em" align="left" />
+
 This repository contains code & information relevant for the paper [Pre-training Data Quality and Quantity for a Low-Resource Language: New Corpus and BERT Models for Maltese](https://aclanthology.org/2022.deeplo-1.10/).
 
 The pre-trained language models can be accessed through the Hugging Face Hub using [`MLRS/BERTu`](https://huggingface.co/MLRS/BERTu) or [`MLRS/mBERTu`](https://huggingface.co/MLRS/mBERTu).
