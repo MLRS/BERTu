@@ -577,36 +577,37 @@ def main():
         )
 
     b_to_i_label = {}
-    for label_column_name in label_column_names:
-        # Model has labels -> use them.
-        if label_column_name in model.config.label2id and model.config.label2id[label_column_name] != PretrainedConfig(
-                num_labels=num_labels[label_column_name]).label2id:
-            if sorted(model.config.label2id[label_column_name].keys()) == sorted(label_list[label_column_name]):
-                # Reorganize `label_list` to match the ordering of the model.
-                if labels_are_int:
-                    label_to_id[label_column_name] = {i: int(model.config.label2id[l]) for i, l in enumerate(label_list[label_column_name])}
-                    label_list[label_column_name] = [model.config.id2label[i] for i in range(num_labels[label_column_name])]
-                else:
-                    label_list[label_column_name] = [model.config.id2label[i] for i in range(num_labels[label_column_name])]
-                    label_to_id[label_column_name] = {l: i for i, l in enumerate(label_list[label_column_name])}
+    label_column_name = label_column_names[0]
+    # Model has labels -> use them.
+    if model.config.label2id and model.config.label2id != PretrainedConfig(num_labels=num_labels[label_column_name]).label2id:
+        if sorted(model.config.label2id[label_column_name].keys()) == sorted(label_list[label_column_name]):
+            # Reorganize `label_list` to match the ordering of the model.
+            if labels_are_int:
+                label_to_id[label_column_name] = {i: int(model.config.label2id[l]) for i, l in enumerate(label_list[label_column_name])}
+                label_list[label_column_name] = [model.config.id2label[i] for i in range(num_labels[label_column_name])]
             else:
-                logger.warning(
-                    "Your model seems to have been trained with labels, but they don't match the dataset: "
-                    f"model labels: {sorted(model.config.label2id.keys())}, dataset labels:"
-                    f" {sorted(label_list)}.\nIgnoring the model labels as a result.",
-                )
+                label_list[label_column_name] = [model.config.id2label[i] for i in range(num_labels[label_column_name])]
+                label_to_id[label_column_name] = {l: i for i, l in enumerate(label_list[label_column_name])}
+        else:
+            logger.warning(
+                "Your model seems to have been trained with labels, but they don't match the dataset: "
+                f"model labels: {sorted(model.config.label2id.keys())}, dataset labels:"
+                f" {sorted(label_list)}.\nIgnoring the model labels as a result.",
+            )
 
-        # Set the correspondences label/ID inside the model config
-        model.config.label2id[label_column_name] = {l: i for i, l in enumerate(label_list[label_column_name])}
-        model.config.id2label[label_column_name] = dict(enumerate(label_list[label_column_name]))
+    # Set the correspondences label/ID inside the model config
+    model.config.label2id = {l: i for i, l in enumerate(label_list[label_column_name])}
+    model.config.id2label = dict(enumerate(label_list[label_column_name]))
+    config.label2id = model.config.label2id
+    config.id2label = model.config.id2label
 
-        # Map that sends B-Xxx label to its I-Xxx counterpart
-        b_to_i_label[label_column_name] = []
-        for idx, label in enumerate(label_list[label_column_name]):
-            if label.startswith("B-") and label.replace("B-", "I-") in label_list[label_column_name]:
-                b_to_i_label[label_column_name].append(label_list[label_column_name].index(label.replace("B-", "I-")))
-            else:
-                b_to_i_label[label_column_name].append(idx)
+    # Map that sends B-Xxx label to its I-Xxx counterpart
+    b_to_i_label[label_column_name] = []
+    for idx, label in enumerate(label_list[label_column_name]):
+        if label.startswith("B-") and label.replace("B-", "I-") in label_list[label_column_name]:
+            b_to_i_label[label_column_name].append(label_list[label_column_name].index(label.replace("B-", "I-")))
+        else:
+            b_to_i_label[label_column_name].append(idx)
 
     if data_args.max_seq_length > tokenizer.model_max_length:
         logger.warning(
