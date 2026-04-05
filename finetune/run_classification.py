@@ -454,7 +454,6 @@ def main():
             token=model_args.token,
             **dataset_kwargs,
         )
-    #raw_datasets = raw_datasets.filter(lambda instance: "socialmedia" not in instance["id"])    
 
     # See more about loading any type of standard or custom dataset at
     # https://huggingface.co/docs/datasets/loading_datasets.
@@ -843,52 +842,50 @@ def main():
 
     if training_args.do_predict:
         logger.info("*** Predict ***")
-        for config, predict_dataset in {config: load_dataset("MLRS/maltese_sentiment_analysis", config, split="test") for config in ("all", "budget2018", "microblogs", "social_media")}.items():
-            predict_dataset = predict_dataset.map(
-                preprocess_function,
-                batched=True,
-                num_proc=data_args.preprocessing_num_workers,
-                load_from_cache_file=not data_args.overwrite_cache,
-                desc="Running tokenizer on dataset",
-            )
-            # Removing the `label` columns if exists because it might contains -1 and Trainer won't like that.
-            #if "label" in predict_dataset.features:
-            #    predict_dataset = predict_dataset.remove_columns("label")
-            results = trainer.predict(predict_dataset)
-            
-            metrics = results.metrics
-            max_eval_samples = data_args.max_eval_samples if data_args.max_eval_samples is not None else len(predict_dataset)
-            metrics[f"test_samples"] = min(max_eval_samples, len(predict_dataset))
-            metrics = {name.replace("test", f"test_{config}"): metric for name, metric in metrics.items()}
-            trainer.log_metrics("test", metrics)
-            trainer.save_metrics("test", metrics)
-            
-            predictions = results.predictions
-            if is_regression:
-                predictions = np.squeeze(predictions)
-            elif is_multi_label:
-                # Convert logits to multi-hot encoding. We compare the logits to 0 instead of 0.5, because the sigmoid is not applied.
-                # You can also pass `preprocess_logits_for_metrics=lambda logits, labels: nn.functional.sigmoid(logits)` to the Trainer
-                # and set p > 0.5 below (less efficient in this case)
-                predictions = np.array([np.where(p > 0, 1, 0) for p in predictions])
-            else:
-                predictions = np.argmax(predictions, axis=1)
-            output_predict_file = os.path.join(training_args.output_dir, f"{config}_predictions.txt")
-            if trainer.is_world_process_zero():
-                with open(output_predict_file, "w") as writer:
-                    logger.info("***** Predict results *****")
-                    writer.write("index\tprediction\n")
-                    for index, item in enumerate(predictions):
-                        if is_regression:
-                            writer.write(f"{index}\t{item:3.3f}\n")
-                        elif is_multi_label:
-                            # recover from multi-hot encoding
-                            item = [label_list[i] for i in range(len(item)) if item[i] == 1]
-                            writer.write(f"{index}\t{item}\n")
-                        else:
-                            item = label_list[item]
-                            writer.write(f"{index}\t{item}\n")
-            logger.info("Predict results saved at {}".format(output_predict_file))
+        predict_dataset = predict_dataset.map(
+            preprocess_function,
+            batched=True,
+            num_proc=data_args.preprocessing_num_workers,
+            load_from_cache_file=not data_args.overwrite_cache,
+            desc="Running tokenizer on dataset",
+        )
+        # Removing the `label` columns if exists because it might contains -1 and Trainer won't like that.
+        #if "label" in predict_dataset.features:
+        #    predict_dataset = predict_dataset.remove_columns("label")
+        results = trainer.predict(predict_dataset)
+        
+        metrics = results.metrics
+        max_eval_samples = data_args.max_eval_samples if data_args.max_eval_samples is not None else len(predict_dataset)
+        metrics["test_samples"] = min(max_eval_samples, len(predict_dataset))
+        trainer.log_metrics("test", metrics)
+        trainer.save_metrics("test", metrics)
+        
+        predictions = results.predictions
+        if is_regression:
+            predictions = np.squeeze(predictions)
+        elif is_multi_label:
+            # Convert logits to multi-hot encoding. We compare the logits to 0 instead of 0.5, because the sigmoid is not applied.
+            # You can also pass `preprocess_logits_for_metrics=lambda logits, labels: nn.functional.sigmoid(logits)` to the Trainer
+            # and set p > 0.5 below (less efficient in this case)
+            predictions = np.array([np.where(p > 0, 1, 0) for p in predictions])
+        else:
+            predictions = np.argmax(predictions, axis=1)
+        output_predict_file = os.path.join(training_args.output_dir, "predictions.txt")
+        if trainer.is_world_process_zero():
+            with open(output_predict_file, "w") as writer:
+                logger.info("***** Predict results *****")
+                writer.write("index\tprediction\n")
+                for index, item in enumerate(predictions):
+                    if is_regression:
+                        writer.write(f"{index}\t{item:3.3f}\n")
+                    elif is_multi_label:
+                        # recover from multi-hot encoding
+                        item = [label_list[i] for i in range(len(item)) if item[i] == 1]
+                        writer.write(f"{index}\t{item}\n")
+                    else:
+                        item = label_list[item]
+                        writer.write(f"{index}\t{item}\n")
+        logger.info("Predict results saved at {}".format(output_predict_file))
     kwargs = {"finetuned_from": model_args.model_name_or_path, "tasks": data_args.task_name if data_args.task_name else "text-classification"}
 
     if training_args.push_to_hub:
